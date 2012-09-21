@@ -14,8 +14,11 @@ import javax.ws.rs.core.MediaType;
 import javax.xml.bind.JAXBException;
 
 import org.apache.hadoop.io.IOUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Component;
 
 import eu.scapeproject.hrider.service.storage.StorageService;
 import eu.scapeproject.model.Identifier;
@@ -23,11 +26,14 @@ import eu.scapeproject.model.IntellectualEntity;
 import eu.scapeproject.model.mets.SCAPEMarshaller;
 
 @Path("entity")
+@Component
 public class IntellectualEntityResource {
 	@Autowired
 	@Qualifier("storageService")
 	private StorageService storage;
 	private SCAPEMarshaller marshaller;
+	
+	private static final Logger LOG = LoggerFactory.getLogger(IntellectualEntityResource.class);
 
 	public IntellectualEntityResource() throws IOException {
 		try {
@@ -40,14 +46,24 @@ public class IntellectualEntityResource {
 	@GET
 	@Path("/{id}")
 	@Produces(MediaType.APPLICATION_XML)
-	public IntellectualEntity getEntityXML(@PathParam("id") String id) throws IOException {
-		return storage.getEntity(id);
+	public String getEntityXML(@PathParam("id") String id) throws IOException {
+		LOG.debug("fetching entity " + id);
+		return storage.getEntityXML(id);
 	}
-
+	
+	@GET
+	@Path("/{id}")
+	@Produces(MediaType.APPLICATION_JSON)
+	public String getEntityJSON(@PathParam("id") String id) throws IOException {
+		LOG.debug("fetching entity " + id);
+		throw new IOException("Not yet implemented...");
+	}
+	
 	@POST
 	@Consumes(MediaType.APPLICATION_XML)
 	@Produces(MediaType.TEXT_PLAIN)
 	public String createEntity(InputStream in) throws IOException {
+		LOG.debug("ingesting entity...");
 		try {
 			IntellectualEntity entity = marshaller.deserialize(IntellectualEntity.class, in);
 			if (entity.getIdentifier() == null || entity.getIdentifier().getValue() == null) {
